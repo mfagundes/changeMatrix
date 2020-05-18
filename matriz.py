@@ -1,169 +1,205 @@
 # -*- coding: utf8 -*-
+import sys
+from collections import deque
+from os import system
+
+BLANK = "O"
 
 
-def create_array(cmd):
+def width(board):
+    return len(board[0])
+
+def height(board):
+    return len(board)
+
+def x(coord):
+    return coord[0]
+
+def y(coord):
+    return coord[1]
+
+def offset(coord, rel):
+    return x(coord) + x(rel), y(coord) + y(rel)
+
+def set_item(board, coord, value):
+    board[y(coord) - 1][x(coord) - 1] = value
+
+def get_item(board, coord):
+    return board[y(coord) - 1][x(coord) - 1]
+
+def set_many(board, coords, value):
+    for c in coords:
+        set_item(board, c, value)
+
+def get_many(board, coords):
+    for c in coords:
+        yield get_item(board, c)
+
+def coords_of(board):
+    yield from region(1, 1, width(board), height(board))
+
+def region(col_start, row_start, col_end, row_end):
+    for row in range(row_start, row_end + 1):
+        for col in range(col_start, col_end + 1):
+            yield col, row
+
+def items(board):
+    for coord in coords_of(board):
+        yield coord, get_item(board, coord)
+
+
+def contains(board, coord):
+    return 1 <= x(coord) <= width(board) and 1 <= y(coord) <= height(board)
+
+def string(board):
+    return '\n'.join(("".join(row) for row in board))
+
+
+# def flood(coord, inside, key, strategy=((-1, 0), (1, 0), (0, -1), (0, 1))):
+#     if not inside(coord):
+#         return
+#
+#     yield coord
+#
+#     neighbor = (offset(coord, rel) for rel in strategy)
+#
+#     for n in neighbor:
+#         if inside(n) and key(n):
+#             yield from flood(n, inside, key)
+#
+
+def flood(original, inside, key, strategy=((-1, 0), (1, 0), (0, -1), (0, 1))):
+    visited = set()
+    pending = deque((original,))
+
+    while pending:
+        coord = pending.pop()
+        visited.add(coord)
+
+        yield coord
+
+        neighbors = (offset(coord, rel) for rel in strategy)
+
+        for n in neighbors:
+            if (n not in visited
+                    and inside(n)
+                    and key(n)):
+                pending.append(n)
+
+
+def create_array(board, w, h, value=BLANK):
     """Create a array - 'I' Command."""
-    board = []
-    col, line = cmd
-
-    for x in range(int(line)):
-        board.append(["O"] * int(col))
-    return board
+    board[:] = [[value] * w for _ in range(h)]
 
 
-def clean_array(board):
+def clean_array(board, value=BLANK):
     """Clean a array - 'C' Command."""
-    for line in range(0, len(board)):
-        for col in range(0, len(board[line])):
-            board[line][col] = "O"
-    return board
+    set_many(board, coords_of(board), value)
 
 
-def color_pixel(cmd, board):
+def color_pixel(board, col, row, color):
     """Change the color of one pixel - 'L' Command."""
-    col, line, color = cmd
-
-    board[int(line) - 1][int(col) - 1] = color
-    return board
+    set_item(board, (col, row), color)
 
 
-def ver_pixel(cmd, board):
+def ver_pixel(board, col, row_start, row_end, color):
     """Change the color of a column - 'V' Command."""
-    col, lineIni, lineEnd, C = cmd
-
-    for ver in range(int(lineIni) - 1, int(lineEnd)):
-        board[int(ver)][int(col) - 1] = C
-    return board
+    set_many(board, region(col, row_start, col, row_end), color)
 
 
-def hor_pixel(cmd, board):
+def hor_pixel(board, col_start, col_end, row, color):
     """Change the color of a line - 'H' Command."""
-    colIni, colEnd, line, color = cmd
-
-    for hor in range(int(colIni) - 1, int(colEnd)):
-        board[int(line) - 1][int(hor)] = color
-    return board
+    set_many(board, region(col_start, row, col_end, row), color)
 
 
-def block_pixel(cmd, board):
+def block_pixel(board, col_start, row_start, col_end, row_end, color):
     """Change color of an entire block - 'K' Command."""
-    colIni, lineIni, colEnd, lineEnd, color = cmd
-
-    for hor in range(int(colIni) - 1, int(colEnd)):
-        for ver in range(int(lineIni) - 1, int(lineEnd)):
-            board[int(ver)][int(hor)] = color
-    return board
+    set_many(board, region(col_start, row_start, col_end, row_end), color)
 
 
-def out_range(board, Y, X):
-    """Check if a cmd is out of list range."""
-    line = len(board)
-    col = len(board[0])
-
-    if (X >= 0 and X < col) and (Y >= 0 and Y < line):
-        return True
-    else:
-        return False
-
-
-def fill_pixel(cmd, board):
+def fill_pixel(board, col, row, new_color):
     """Fill a continuous region 'F' command."""
-    col, line, chgColor = cmd
+    coord = (col, row)
+    old_color = get_item(board, coord)
 
-    color = board[line][col]
+    def bound(coord):
+        return contains(board, coord)
 
-    if out_range(board, line, col):
-        board[line][col] = chgColor
+    def same_color(neighbor):
+        return get_item(board, neighbor) == old_color
 
-        if out_range(board, line, col - 1):
-            if board[line][col - 1] == color:
-                fill_pixel([col - 1, line, chgColor], board)
-
-        if out_range(board, line, col + 1):
-            if board[line][col + 1] == color:
-                fill_pixel([col + 1, line, chgColor], board)
-
-        if out_range(board, line - 1, col):
-            if board[line - 1][col] == color:
-                fill_pixel([col, line - 1, chgColor], board)
-
-        if out_range(board, line + 1, col):
-            if board[line + 1][col] == color:
-                fill_pixel([col, line + 1, chgColor], board)
-
-    return board
+    set_many(board, flood(coord, inside=bound, key=same_color), new_color)
 
 
-def save_array(name, board):
+def save_array(board, filename):
     """Save the array with the 'S' command."""
-    with open(name.lower(), "w") as my_file:
-        for item in board:
-            my_file.write("".join(item) + "\n")
+    with open(filename, "w") as f:
+        f.write(string(board))
 
 
-def print_board(board):
-    """Print the Board."""
-    print("\n")
-    for row in board:
-        print("".join(row))
-    print("\n")
+def prompt(convert):
+    while True:
+        value = input('> ')
+        value = value.strip()
+
+        try:
+            value = convert(value)
+        except ValueError as e:
+            print(e)
+        else:
+            break
+
+    return value
 
 
-def read_sequence():
-    """Read and validate a sequence of commands."""
-    charValid = ("ICLVHKFSX")
-    sqc = input("Digite um comando: ").upper()
-    sqc = sqc.split()
+def parse(text, options='ICLVHKFSX'):
+    """Parse and validate a command string."""
+    tokens = text.upper().split()
 
-    for char in charValid:
-        if char == sqc[0] and not "":
-            return sqc
-    else:
-        print("\nComando Inválido!\n")
-        return sqc
+    if not tokens or tokens[0] not in options:
+        raise ValueError('Comando inválido.')
+
+    for i, t in enumerate(tokens):
+        if t.isdigit():
+            tokens[i] = int(t)
+
+    return tokens
+
+
+def invoke(board, tokens):
+    commands = {
+        'X': sys.exit,
+        'I': create_array,
+        'L': color_pixel,
+        'V': ver_pixel,
+        'H': hor_pixel,
+        'K': block_pixel,
+        'F': fill_pixel,
+        'S': save_array,
+        'C': clean_array,
+    }
+
+    cmd, *args = tokens
+    f = commands[cmd]
+    f(board, *args)
 
 
 def main():
+    board = []
+
     while True:
         try:
-            cmd = read_sequence()
+            system('clear')
+            print(string(board))
+            cmd = prompt(parse)
+            invoke(board, cmd)
 
-            if cmd[0] == "X":
-                break
+        except TypeError:
+            print('Argumentos inválidos.')
 
-            elif cmd[0] == "I":
-                board = create_array(cmd[1:3])
+        except KeyboardInterrupt:
+            break
 
-            elif cmd[0] == "L":
-                board = color_pixel(cmd[1:4], board)
-
-            elif cmd[0] == "V":
-                board = ver_pixel(cmd[1:5], board)
-
-            elif cmd[0] == "H":
-                board = hor_pixel(cmd[1:5], board)
-
-            elif cmd[0] == "K":
-                board = block_pixel(cmd[1:6], board)
-
-            elif cmd[0] == "F":
-                cmd[1] = int(cmd[1]) - 1
-                cmd[2] = int(cmd[2]) - 1
-                board = fill_pixel(cmd[1:4], board)
-
-            elif cmd[0] == "S":
-                save_array(cmd[1], board)
-
-            elif cmd[0] == "C":
-                board = clean_array(board)
-
-            else:
-                continue
-
-            print_board(board)
-
-        except:
-            print("\nComando inválido!\n")
 
 
 if __name__ == '__main__':
