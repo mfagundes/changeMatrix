@@ -2,6 +2,14 @@
 BLANK = "O"
 
 
+def x(coord):
+    return coord[0]
+
+
+def y(coord):
+    return coord[1]
+
+
 def width(board):
     return len(board[0])
 
@@ -14,12 +22,19 @@ def set_item(board, coord, value):
     board[y(coord) - 1][x(coord) - 1] = value
 
 
-def x(coord):
-    return coord[0]
+def set_many(board, coords, value):
+    for c in coords:
+        set_item(board, c, value)
 
 
-def y(coord):
-    return coord[1]
+def region(col_start, row_start, col_end, row_end):
+    for row in range(row_start, row_end + 1):
+        for col in range(col_start, col_end + 1):
+            yield col, row
+
+
+def coords_of(board):
+    yield from region(1, 1, width(board), height(board))
 
 
 def read_sequence():  # Read and validate a sequence of commands.
@@ -56,9 +71,7 @@ def create_array(cmd, value=BLANK):
 def clean_array(board, value=BLANK):
     """Clean a array - 'C' Command."""
     # TODO: range conhece muito sobre a estrutura do board
-    for row in range(1, height(board) + 1):
-        for col in range(1, width(board) + 1):
-            set_item(board, (col, row), value)  # col, row vira uma tupla (um argumento só)
+    set_many(board, coords_of(board), value)
     return board
 
 
@@ -73,9 +86,7 @@ def color_pixel(cmd, board):
 def ver_pixel(cmd, board):
     """Change the color of a column - 'V' Command."""
     col, row_start, row_end, color = int(cmd[0]), int(cmd[1]), int(cmd[2]), cmd[3]
-
-    for row in range(row_start, row_end + 1):
-        set_item(board, (col, row), color)
+    set_many(board, region(col, row_start, col, row_end), color)
     return board
 
 
@@ -83,18 +94,14 @@ def hor_pixel(cmd, board):
     """Change the color of a line - 'H' Command."""
     col_start, col_end, row, color = int(cmd[0]), int(cmd[1]), int(cmd[2]), cmd[3]
 
-    for col in range(col_start, col_end + 1):
-        set_item(board, (col, row), color)
-        # board[int(row) - 1][int(col)] = color
+    set_many(board, region(col_start, row, col_end, row), color)
     return board
 
 
 def block_pixel(cmd, board):  # Change color of an entire block - 'K' Command.
-    colIni, lineIni, colEnd, lineEnd, color = cmd
+    col_start, row_start, col_end, row_end, color = int(cmd[0]), int(cmd[1]), int(cmd[2]), int(cmd[3]), cmd[4]
 
-    for hor in range(int(colIni) - 1, int(colEnd)):
-        for ver in range(int(lineIni) - 1, int(lineEnd)):
-            board[int(ver)][int(hor)] = color
+    set_many(board, region(col_start, row_start, col_end, row_end), color)
     return board
 
 
