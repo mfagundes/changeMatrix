@@ -142,10 +142,9 @@ def fill_pixel(cmd, board):  # Fill a continuous region 'F' command.
     return board
 
 
-def save_array(name, board):  # Save the array with the 'S' command.
-    with open(name.lower(), "w") as my_file:
-        for item in board:
-            my_file.write("".join(item) + "\n")
+def save_array(filename, board):  # Save the array with the 'S' command.
+    with open(filename, "w") as f:
+        f.write(string(board))
 
 
 def main():
