@@ -1,4 +1,5 @@
 # -*- coding: utf8 -*-
+BLANK = "O"
 
 
 def read_sequence():  # Read and validate a sequence of commands.
@@ -14,20 +15,22 @@ def read_sequence():  # Read and validate a sequence of commands.
         return sqc
 
 
-def print_board(board):  # Print the Board.
+def string(board):
+    return '\n'.join(("".join(row) for row in board))
+
+
+def print_board(board):
+    """Print the Board."""
     print("\n")
-    for row in board:
-        print("".join(row))
+    print(string(board))
     print("\n")
 
 
-def create_array(cmd):  # Create a array - 'I' Command.
-    board = []
-    col, line = cmd
-
-    for x in range(int(line)):
-        board.append(["O"] * int(col))
-    return board
+def create_array(cmd, value=BLANK):
+    """Create a array - 'I' Command."""
+    # TODO a linha abaixo não impacta só ela
+    col, row = int(cmd[0]), int(cmd[1])  # se não passar inteiro vai dar erro antes de passar o comando
+    return [[value] * col for _ in range(row)]
 
 
 def clean_array(board):  # Clean a array - 'C' Command.
