@@ -2,6 +2,26 @@
 BLANK = "O"
 
 
+def width(board):
+    return len(board[0])
+
+
+def height(board):
+    return len(board)
+
+
+def set_item(board, coord, value):
+    board[y(coord)][x(coord)] = value
+
+
+def x(coord):
+    return coord[0]
+
+
+def y(coord):
+    return coord[1]
+
+
 def read_sequence():  # Read and validate a sequence of commands.
     charValid = ("ICLVHKFSX")
     sqc = input("Digite um comando: ").upper()
@@ -33,10 +53,12 @@ def create_array(cmd, value=BLANK):
     return [[value] * col for _ in range(row)]
 
 
-def clean_array(board):  # Clean a array - 'C' Command.
-    for line in range(0, len(board)):
-        for col in range(0, len(board[line])):
-            board[line][col] = "O"
+def clean_array(board, value=BLANK):
+    """Clean a array - 'C' Command."""
+    # TODO: range conhece muito sobre a estrutura do board
+    for row in range(height(board)):
+        for col in range(width(board)):
+            set_item(board, (col, row), value)  # col, row vira uma tupla (um argumento só)
     return board
 
 
