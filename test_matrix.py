@@ -1,7 +1,7 @@
 from textwrap import dedent
 import pytest as pytest
 
-from matriz import create_array, string, clean_array
+from matriz import create_array, string, clean_array, color_pixel
 
 
 def test_create():
@@ -22,6 +22,18 @@ def test_clean():
         '''\
         OOOO
         OOOO
+        OOOO
+        OOOO
+        OOOO'''
+    )
+
+def test_pixel():
+    board = create_array(['4', '5'])
+    board = color_pixel('2 2 W'.split(), board)
+    assert string(board) == dedent(
+        '''\
+        OOOO
+        OWOO
         OOOO
         OOOO
         OOOO'''

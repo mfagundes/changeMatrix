@@ -11,7 +11,7 @@ def height(board):
 
 
 def set_item(board, coord, value):
-    board[y(coord)][x(coord)] = value
+    board[y(coord) - 1][x(coord) - 1] = value
 
 
 def x(coord):
@@ -56,16 +56,17 @@ def create_array(cmd, value=BLANK):
 def clean_array(board, value=BLANK):
     """Clean a array - 'C' Command."""
     # TODO: range conhece muito sobre a estrutura do board
-    for row in range(height(board)):
-        for col in range(width(board)):
+    for row in range(1, height(board) + 1):
+        for col in range(1, width(board) + 1):
             set_item(board, (col, row), value)  # col, row vira uma tupla (um argumento só)
     return board
 
 
-def color_pixel(cmd, board):  # Change the color of one pixel - 'L' Command.
-    col, line, color = cmd
+def color_pixel(cmd, board):
+    """Change the color of one pixel - 'L' Command."""
+    coord, color = (int(cmd[0]), int(cmd[1])), cmd[2]  # TODO
+    set_item(board, coord, color)
 
-    board[int(line) - 1][int(col) - 1] = color
     return board
 
 
