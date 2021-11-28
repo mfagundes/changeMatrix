@@ -70,7 +70,8 @@ def color_pixel(cmd, board):
     return board
 
 
-def ver_pixel(cmd, board):  # Change the color of a column - 'V' Command.
+def ver_pixel(cmd, board):
+    """Change the color of a column - 'V' Command."""
     col, row_start, row_end, color = int(cmd[0]), int(cmd[1]), int(cmd[2]), cmd[3]
 
     for row in range(row_start, row_end + 1):
@@ -78,11 +79,13 @@ def ver_pixel(cmd, board):  # Change the color of a column - 'V' Command.
     return board
 
 
-def hor_pixel(cmd, board):  # Change the color of a line - 'H' Command.
-    colIni, colEnd, line, color = cmd
+def hor_pixel(cmd, board):
+    """Change the color of a line - 'H' Command."""
+    col_start, col_end, row, color = int(cmd[0]), int(cmd[1]), int(cmd[2]), cmd[3]
 
-    for hor in range(int(colIni) - 1, int(colEnd)):
-        board[int(line) - 1][int(hor)] = color
+    for col in range(col_start, col_end + 1):
+        set_item(board, (col, row), color)
+        # board[int(row) - 1][int(col)] = color
     return board
 
 
