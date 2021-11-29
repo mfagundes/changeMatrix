@@ -4,6 +4,14 @@ from collections import deque
 BLANK = "O"
 
 
+def width(board):
+    return len(board[0])
+
+
+def height(board):
+    return len(board)
+
+
 def x(coord):
     return coord[0]
 
@@ -14,6 +22,23 @@ def y(coord):
 
 def offset(coord, rel):
     return x(coord) + x(rel), y(coord) + y(rel)
+
+
+def get_item(board, coord):
+    return board[y(coord) - 1][x(coord) - 1]
+
+
+def set_item(board, coord, value):
+    board[y(coord) - 1][x(coord) - 1] = value
+
+
+def set_many(board, coords, value):
+    for c in coords:
+        set_item(board, c, value)
+
+
+def coords_of(board):
+    yield from region(1, 1, width(board), height(board))
 
 
 def region(col_start, row_start, col_end, row_end):
@@ -54,51 +79,9 @@ def flood(original, inside, key, strategy=((-1, 0), (1, 0), (0, -1), (0, 1))):
                 pending.append(n)
 
 
-def width(board):
-    return len(board[0])
-
-
-def height(board):
-    return len(board)
-
-
-def get_item(board, coord):
-    return board[y(coord) - 1][x(coord) - 1]
-
-
-def set_item(board, coord, value):
-    board[y(coord) - 1][x(coord) - 1] = value
-
-
-def set_many(board, coords, value):
-    for c in coords:
-        set_item(board, c, value)
-
-
-def coords_of(board):
-    yield from region(1, 1, width(board), height(board))
-
-
 def contains(board, coord):
     """Check if a cmd is out of list range."""
     return 1 <= x(coord) <= width(board) and 1 <= y(coord) <=height(board)
-
-
-def read_sequence():  # Read and validate a sequence of commands.
-    charValid = ("ICLVHKFSX")
-    sqc = input("Digite um comando: ").upper()
-    sqc = sqc.split()
-
-    for char in charValid:
-        if char == sqc[0] and not "":
-            return sqc
-    else:
-        print("\nComando Inválido!\n")
-        return sqc
-
-
-def string(board):
-    return '\n'.join(("".join(row) for row in board))
 
 
 def create_array(cmd, value=BLANK):
@@ -168,6 +151,23 @@ def fill_pixel(cmd, board):
 def save_array(filename, board):  # Save the array with the 'S' command.
     with open(filename, "w") as f:
         f.write(string(board))
+
+
+def string(board):
+    return '\n'.join(("".join(row) for row in board))
+
+
+def read_sequence():  # Read and validate a sequence of commands.
+    charValid = ("ICLVHKFSX")
+    sqc = input("Digite um comando: ").upper()
+    sqc = sqc.split()
+
+    for char in charValid:
+        if char == sqc[0] and not "":
+            return sqc
+    else:
+        print("\nComando Inválido!\n")
+        return sqc
 
 
 def main():
