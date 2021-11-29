@@ -1,5 +1,7 @@
 # -*- coding: utf8 -*-
+import sys
 from collections import deque
+from os import system
 
 BLANK = "O"
 
@@ -84,54 +86,40 @@ def contains(board, coord):
     return 1 <= x(coord) <= width(board) and 1 <= y(coord) <=height(board)
 
 
-def create_array(cmd, value=BLANK):
+def create_array(board, w, h, value=BLANK):
     """Create a array - 'I' Command."""
-    # TODO a linha abaixo não impacta só ela
-    col, row = int(cmd[0]), int(cmd[1])  # se não passar inteiro vai dar erro antes de passar o comando
-    return [[value] * col for _ in range(row)]
+    board[:] = [[value] * w for _ in range(h)]
 
 
 def clean_array(board, value=BLANK):
     """Clean a array - 'C' Command."""
     # TODO: range conhece muito sobre a estrutura do board
     set_many(board, coords_of(board), value)
-    return board
 
 
-def color_pixel(cmd, board):
+def color_pixel(board, col, row, color):
     """Change the color of one pixel - 'L' Command."""
-    coord, color = (int(cmd[0]), int(cmd[1])), cmd[2]  # TODO
+    coord = col, row
     set_item(board, coord, color)
 
-    return board
 
-
-def ver_pixel(cmd, board):
+def ver_pixel(board, col, row_start, row_end, color):
     """Change the color of a column - 'V' Command."""
-    col, row_start, row_end, color = int(cmd[0]), int(cmd[1]), int(cmd[2]), cmd[3]
     set_many(board, region(col, row_start, col, row_end), color)
-    return board
 
 
-def hor_pixel(cmd, board):
+def hor_pixel(board, col_start, col_end, row, color):
     """Change the color of a line - 'H' Command."""
-    col_start, col_end, row, color = int(cmd[0]), int(cmd[1]), int(cmd[2]), cmd[3]
-
     set_many(board, region(col_start, row, col_end, row), color)
-    return board
 
 
-def block_pixel(cmd, board):  # Change color of an entire block - 'K' Command.
-    col_start, row_start, col_end, row_end, color = int(cmd[0]), int(cmd[1]), int(cmd[2]), int(cmd[3]), cmd[4]
-
+def block_pixel(board, col_start, row_start, col_end, row_end, color):
+    """Change color of an entire block - 'K' Command."""
     set_many(board, region(col_start, row_start, col_end, row_end), color)
-    return board
 
 
-def fill_pixel(cmd, board):
+def fill_pixel(board, col, row, new_color):
     """Fill a continuous region 'F' command."""
-    col, row, new_color = int(cmd[0]), int(cmd[1]), cmd[2]
-
     coord = col, row
     old_color = get_item(board, coord)
 
@@ -145,10 +133,8 @@ def fill_pixel(cmd, board):
 
     set_item(board, coord, new_color)
 
-    return board
 
-
-def save_array(filename, board):  # Save the array with the 'S' command.
+def save_array(board, filename):  # Save the array with the 'S' command.
     with open(filename, "w") as f:
         f.write(string(board))
 
@@ -157,58 +143,66 @@ def string(board):
     return '\n'.join(("".join(row) for row in board))
 
 
-def read_sequence():  # Read and validate a sequence of commands.
-    charValid = ("ICLVHKFSX")
-    sqc = input("Digite um comando: ").upper()
-    sqc = sqc.split()
+def prompt(convert):
+    while True:
+        value = input('> ')
+        value = value.strip()
 
-    for char in charValid:
-        if char == sqc[0] and not "":
-            return sqc
-    else:
-        print("\nComando Inválido!\n")
-        return sqc
+        try:
+            value = convert(value)
+        except ValueError as e:
+            print(e)
+        else:
+            break
 
+    return value
+
+
+def parse(text, options="ICLVHKFSX"):
+    """Parse and validate a text string"""
+    tokens = text.upper().split()
+
+    if not tokens or tokens[0] not in options:
+        raise ValueError('Comando inválido')
+
+    for i, t in enumerate(tokens):
+        if t.isdigit():
+            tokens[i] = int(t)
+
+    return tokens
+
+
+def invoke(board, tokens):
+    commands = {
+        'X': sys.exit,
+        'I': create_array,
+        'L': color_pixel,
+        'V': ver_pixel,
+        'H': hor_pixel,
+        'K': block_pixel,
+        'F': fill_pixel,
+        'S': save_array,
+        'C': clean_array
+    }
+    cmd, *args = tokens
+    f = commands[cmd]
+    f(board, *args)
 
 def main():
+    board = []
     while True:
         try:
-            cmd = read_sequence()
-
-            if cmd[0] == "X":
-                break
-
-            elif cmd[0] == "I":
-                board = create_array(cmd[1:3])
-
-            elif cmd[0] == "L":
-                board = color_pixel(cmd[1:4], board)
-
-            elif cmd[0] == "V":
-                board = ver_pixel(cmd[1:5], board)
-
-            elif cmd[0] == "H":
-                board = hor_pixel(cmd[1:5], board)
-
-            elif cmd[0] == "K":
-                board = block_pixel(cmd[1:6], board)
-
-            elif cmd[0] == "F":
-                board = fill_pixel(cmd[1:4], board)
-
-            elif cmd[0] == "S":
-                save_array(cmd[1], board)
-
-            elif cmd[0] == "C":
-                board = clean_array(board)
-
-            else:
-                continue
-
+            system('clear')
             print(string(board))
 
-        except:
-            print("\nComando inválido!\n")
+            cmd = prompt(parse)
+            invoke(board, cmd)
+
+        except TypeError:
+            print('Argumentos inválidos')
+
+        except KeyboardInterrupt:
+            break
 
 
 if __name__ == '__main__':
