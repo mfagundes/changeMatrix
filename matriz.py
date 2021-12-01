@@ -39,6 +39,11 @@ def set_many(board, coords, value):
         set_item(board, c, value)
 
 
+def get_many(board, coords):
+    for c in coords:
+        yield get_item(board, c)
+
+
 def coords_of(board):
     yield from region(1, 1, width(board), height(board))
 
@@ -47,6 +52,15 @@ def region(col_start, row_start, col_end, row_end):
     for row in range(row_start, row_end + 1):
         for col in range(col_start, col_end + 1):
             yield col, row
+
+
+def items(board):
+    for coord in coords_of(board):
+        yield coord, get_item(board, coord)
+
+
+def string(board):
+    return '\n'.join(("".join(row) for row in board))
 
 
 # def flood(coord, inside, key, strategy=((-1, 0), (1, 0), (0, -1), (0, 1))):
@@ -93,7 +107,6 @@ def create_array(board, w, h, value=BLANK):
 
 def clean_array(board, value=BLANK):
     """Clean a array - 'C' Command."""
-    # TODO: range conhece muito sobre a estrutura do board
     set_many(board, coords_of(board), value)
 
 
@@ -137,10 +150,6 @@ def fill_pixel(board, col, row, new_color):
 def save_array(board, filename):  # Save the array with the 'S' command.
     with open(filename, "w") as f:
         f.write(string(board))
-
-
-def string(board):
-    return '\n'.join(("".join(row) for row in board))
 
 
 def prompt(convert):
